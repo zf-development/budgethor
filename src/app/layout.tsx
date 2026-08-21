@@ -51,7 +51,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         spaceGroteskHeading.variable,
       )}
     >
-      <body className="flex min-h-dvh flex-col">
+      <body className="flex min-h-dvh flex-col" suppressHydrationWarning>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <ThemeProvider>
           {children}
