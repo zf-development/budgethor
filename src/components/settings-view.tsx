@@ -188,6 +188,7 @@ export function SettingsView({
             <AlertDescription className="font-mono">{sqlitePath}</AlertDescription>
           </Alert>
           <ConfirmDialog
+            variant="default"
             title="Relancer l’assistant ?"
             description="Tu reviendras à l’accueil. Tes comptes et lignes actuelles restent en place, tu pourras les revoir."
             confirmLabel="Relancer"

@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDaysIcon, ReceiptIcon, SettingsIcon } from "@/components/icons";
+import { HandCoinsIcon, LayoutGridIcon, SettingsIcon } from "@/components/icons";
 
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 
 const LINKS = [
-  { href: "/", label: "Vue d’ensemble", icon: CalendarDaysIcon },
-  { href: "/debts", label: "Dettes", icon: ReceiptIcon },
+  { href: "/", label: "Vue d’ensemble", icon: LayoutGridIcon },
+  { href: "/debts", label: "Dettes", icon: HandCoinsIcon },
   { href: "/settings", label: "Réglages", icon: SettingsIcon },
 ];
 

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { WalletIcon, ReceiptIcon } from "@/components/icons";
+import { HandCoinsIcon, WalletIcon } from "@/components/icons";
 
 import { DebtProgressRow } from "@/components/debt-progress";
 import { MoneyText } from "@/components/money-text";
@@ -102,7 +102,7 @@ export function DashboardKpis({
       </StatCard>
       <StatCard
         label="Dettes"
-        icon={ReceiptIcon}
+        icon={HandCoinsIcon}
         badge={
           <Badge render={<Link href="/debts" />} variant="outline">
             Gérer

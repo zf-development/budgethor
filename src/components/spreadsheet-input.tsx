@@ -66,6 +66,11 @@ export function SpreadsheetInput({
     if (appearance === "plain") setEditing(false);
   }
 
+  const controlClassName = cn(
+    "h-8 w-full min-w-0 rounded-3xl px-3 text-sm font-normal",
+    className,
+  );
+
   const shared = {
     id,
     ref: inputRef,
@@ -95,29 +100,31 @@ export function SpreadsheetInput({
     const money = inputMode === "decimal" ? parseMoneyToCents(value) : null;
     const empty = value.trim() === "";
     return (
-      <Button
-        type="button"
-        variant="ghost"
-        size="sm"
-        aria-label={ariaLabel}
-        className={fieldAppearanceClassName(
-          "plain",
-          cn(
-            "h-8 w-full min-w-0 justify-start px-2 font-normal",
-            empty && "text-muted-foreground",
-            className,
-          ),
-        )}
-        onClick={() => setEditing(true)}
-      >
-        {empty ? (
-          (placeholder ?? "—")
-        ) : money !== null ? (
-          <MoneyText cents={money} />
-        ) : (
-          <span className="truncate">{value}</span>
-        )}
-      </Button>
+      <div className="block w-full min-w-0">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          aria-label={ariaLabel}
+          className={fieldAppearanceClassName(
+            "plain",
+            cn(
+              "flex max-w-full shrink justify-start",
+              controlClassName,
+              empty && "text-muted-foreground",
+            ),
+          )}
+          onClick={() => setEditing(true)}
+        >
+          {empty ? (
+            (placeholder ?? "—")
+          ) : money !== null ? (
+            <MoneyText cents={money} />
+          ) : (
+            <span className="truncate">{value}</span>
+          )}
+        </Button>
+      </div>
     );
   }
 
@@ -132,5 +139,9 @@ export function SpreadsheetInput({
     );
   }
 
-  return <Input className={className} {...shared} />;
+  return (
+    <div className="block w-full min-w-0">
+      <Input className={controlClassName} {...shared} />
+    </div>
+  );
 }

@@ -1,4 +1,4 @@
-import { CalendarDaysIcon, ReceiptIcon, WalletIcon } from "@/components/icons";
+import { CalendarDaysIcon, HandCoinsIcon, WalletIcon } from "@/components/icons";
 
 import { MoneyText } from "@/components/money-text";
 import { StatCard } from "@/components/stat-card";
@@ -15,7 +15,7 @@ export function DebtPayoffSummary({ debts }: { debts: Debt[] }) {
     <div className="grid gap-3 sm:grid-cols-3">
       <StatCard
         label="Dette totale"
-        icon={ReceiptIcon}
+        icon={HandCoinsIcon}
         value={<MoneyText cents={summary.balanceCents} />}
       />
       <StatCard

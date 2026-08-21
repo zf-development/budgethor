@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
-import { ReceiptIcon } from "@/components/icons";
+import { HandCoinsIcon } from "@/components/icons";
 
 import { AccountSelect } from "@/components/account-select";
 import { createDebt, deleteDebt, updateDebt } from "@/actions/budget";
@@ -45,7 +45,7 @@ export function DebtTable({ debts, accounts }: { debts: Debt[]; accounts: Accoun
       {debts.length === 0 ? (
         <SpreadsheetEmpty
           colSpan={7}
-          icon={ReceiptIcon}
+          icon={HandCoinsIcon}
           title="Aucune dette pour l’instant"
           description="Ajoute un créancier pour suivre le solde restant et le temps de remboursement."
         />

@@ -31,28 +31,33 @@ export function AccountTypeSelect({
   appearance?: FieldAppearance;
 }) {
   return (
-    <Select
-      value={value}
-      items={ACCOUNT_TYPE_ITEMS}
-      onValueChange={(next) => {
-        if (next !== "asset" && next !== "liability") return;
-        onChange(next);
-      }}
-    >
-      <SelectTrigger
-        size={size}
-        className={fieldAppearanceClassName(appearance, cn("w-full", className))}
-        aria-label={ariaLabel}
+    <div className="block w-full min-w-0">
+      <Select
+        value={value}
+        items={ACCOUNT_TYPE_ITEMS}
+        onValueChange={(next) => {
+          if (next !== "asset" && next !== "liability") return;
+          onChange(next);
+        }}
       >
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectGroup>
-          <SelectItem value="asset">{ACCOUNT_TYPE_ITEMS.asset}</SelectItem>
-          <SelectItem value="liability">{ACCOUNT_TYPE_ITEMS.liability}</SelectItem>
-        </SelectGroup>
-      </SelectContent>
-    </Select>
+        <SelectTrigger
+          size={size}
+          className={fieldAppearanceClassName(
+            appearance,
+            cn("flex w-full min-w-0 max-w-none", className),
+          )}
+          aria-label={ariaLabel}
+        >
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectGroup>
+            <SelectItem value="asset">{ACCOUNT_TYPE_ITEMS.asset}</SelectItem>
+            <SelectItem value="liability">{ACCOUNT_TYPE_ITEMS.liability}</SelectItem>
+          </SelectGroup>
+        </SelectContent>
+      </Select>
+    </div>
   );
 }
 
