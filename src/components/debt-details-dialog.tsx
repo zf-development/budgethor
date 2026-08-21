@@ -25,7 +25,7 @@ import {
   inferredPrincipalCents,
   paidMonthsSince,
 } from "@/lib/debts";
-import { parseMoneyToCents } from "@/lib/money";
+import { parseMoneyToCents, parsePercentToBps, formatBpsAsPercent } from "@/lib/money";
 import { MoneyText } from "@/components/money-text";
 import type { Debt } from "@/db/schema";
 
@@ -33,13 +33,15 @@ export function DebtDetailsDialog({ debt }: { debt: Debt }) {
   const [open, setOpen] = useState(false);
   const [payingSince, setPayingSince] = useState(debt.payingSince);
   const [principalDraft, setPrincipalDraft] = useState(String(debt.principalCents / 100));
+  const [rateDraft, setRateDraft] = useState(formatBpsAsPercent(debt.annualRateBps));
   const [, startTransition] = useTransition();
 
   useEffect(() => {
     if (!open) return;
     setPayingSince(debt.payingSince);
     setPrincipalDraft(String(debt.principalCents / 100));
-  }, [debt.payingSince, debt.principalCents, open]);
+    setRateDraft(formatBpsAsPercent(debt.annualRateBps));
+  }, [debt.annualRateBps, debt.payingSince, debt.principalCents, open]);
 
   const inferred = useMemo(
     () =>
@@ -71,9 +73,11 @@ export function DebtDetailsDialog({ debt }: { debt: Debt }) {
 
   function save() {
     const principalCents = parseMoneyToCents(principalDraft);
+    const annualRateBps = parsePercentToBps(rateDraft);
     startTransition(() => {
       void updateDebt(debt.id, {
         payingSince,
+        annualRateBps: annualRateBps ?? 0,
         principalCents:
           principalCents === null
             ? debtEffectivePrincipal({ ...debt, payingSince })
@@ -131,6 +135,21 @@ export function DebtDetailsDialog({ debt }: { debt: Debt }) {
               Ce que tu devais au début. Progrès actuel :{" "}
               <MoneyText cents={debt.balanceCents} /> restant sur{" "}
               <MoneyText cents={previewPrincipal} />.
+            </FieldDescription>
+          </Field>
+          <Field>
+            <FieldLabel htmlFor={`rate-${debt.id}`}>Taux d’intérêt annuel</FieldLabel>
+            <SpreadsheetInput
+              appearance="field"
+              id={`rate-${debt.id}`}
+              ariaLabel="Taux d’intérêt annuel"
+              suffix="%"
+              inputMode="decimal"
+              value={rateDraft}
+              onCommit={setRateDraft}
+            />
+            <FieldDescription>
+              Sert à Avalanche et à l’économie d’intérêts. Laisse 0 si tu ne le connais pas.
             </FieldDescription>
           </Field>
         </FieldGroup>

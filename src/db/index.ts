@@ -27,7 +27,8 @@ CREATE TABLE IF NOT EXISTS debts (
   principal_cents INTEGER NOT NULL DEFAULT 0,
   monthly_payment_cents INTEGER NOT NULL DEFAULT 0,
   day_of_month INTEGER NOT NULL DEFAULT 1,
-  paying_since TEXT NOT NULL DEFAULT ''
+  paying_since TEXT NOT NULL DEFAULT '',
+  annual_rate_bps INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS income_templates (
@@ -50,6 +51,19 @@ CREATE TABLE IF NOT EXISTS payment_templates (
   notes TEXT NOT NULL DEFAULT '',
   debt_id TEXT REFERENCES debts(id) ON DELETE SET NULL,
   from_debt INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS debt_payoff_plans (
+  id INTEGER PRIMARY KEY NOT NULL DEFAULT 1,
+  strategy TEXT NOT NULL DEFAULT 'snowball',
+  extra_monthly_cents INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS debt_payoff_drops (
+  id TEXT PRIMARY KEY,
+  debt_id TEXT NOT NULL UNIQUE REFERENCES debts(id) ON DELETE CASCADE,
+  amount_cents INTEGER NOT NULL DEFAULT 0,
+  redirect_debt_id TEXT REFERENCES debts(id) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS months (
@@ -116,6 +130,7 @@ export function getDb() {
   sqlite.exec(SQLITE_SCHEMA);
   migrateSchema(sqlite);
   migrateDebts(sqlite);
+  migrateDebtPayoffPlan(sqlite);
 
   cached = drizzle(sqlite, { schema });
 
@@ -124,6 +139,14 @@ export function getDb() {
     cached
       .insert(schema.settings)
       .values({ id: 1, onboardingCompleted: false, theme: "light" })
+      .run();
+  }
+
+  const existingPlan = cached.select().from(schema.debtPayoffPlans).all();
+  if (existingPlan.length === 0) {
+    cached
+      .insert(schema.debtPayoffPlans)
+      .values({ id: 1, strategy: "snowball", extraMonthlyCents: 0 })
       .run();
   }
 
@@ -156,6 +179,9 @@ function migrateSchema(sqlite: InstanceType<typeof Database>) {
   }
   if (!debtNames.has("paying_since")) {
     sqlite.exec("ALTER TABLE debts ADD COLUMN paying_since TEXT NOT NULL DEFAULT ''");
+  }
+  if (!debtNames.has("annual_rate_bps")) {
+    sqlite.exec("ALTER TABLE debts ADD COLUMN annual_rate_bps INTEGER NOT NULL DEFAULT 0");
   }
 
   const paymentColumns = sqlite.prepare("PRAGMA table_info(payment_templates)").all() as {
@@ -194,4 +220,23 @@ function migrateDebts(sqlite: InstanceType<typeof Database>) {
   if (!names.has("paying_since")) {
     sqlite.exec("ALTER TABLE debts ADD COLUMN paying_since TEXT NOT NULL DEFAULT ''");
   }
+  if (!names.has("annual_rate_bps")) {
+    sqlite.exec("ALTER TABLE debts ADD COLUMN annual_rate_bps INTEGER NOT NULL DEFAULT 0");
+  }
+}
+
+function migrateDebtPayoffPlan(sqlite: InstanceType<typeof Database>) {
+  sqlite.exec(`
+    CREATE TABLE IF NOT EXISTS debt_payoff_plans (
+      id INTEGER PRIMARY KEY NOT NULL DEFAULT 1,
+      strategy TEXT NOT NULL DEFAULT 'snowball',
+      extra_monthly_cents INTEGER NOT NULL DEFAULT 0
+    );
+    CREATE TABLE IF NOT EXISTS debt_payoff_drops (
+      id TEXT PRIMARY KEY,
+      debt_id TEXT NOT NULL UNIQUE REFERENCES debts(id) ON DELETE CASCADE,
+      amount_cents INTEGER NOT NULL DEFAULT 0,
+      redirect_debt_id TEXT REFERENCES debts(id) ON DELETE SET NULL
+    );
+  `);
 }

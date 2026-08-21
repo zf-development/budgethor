@@ -4,6 +4,8 @@ import { getDb } from "@/db";
 import {
   accountSnapshots,
   accounts,
+  debtPayoffDrops,
+  debtPayoffPlans,
   debts,
   incomeEntries,
   incomeTemplates,
@@ -50,6 +52,19 @@ export function listDebts() {
 
 export function getDebt(id: string) {
   return getDb().select().from(debts).where(eq(debts.id, id)).get();
+}
+
+export function getDebtPayoffPlan() {
+  const db = getDb();
+  let plan = db.select().from(debtPayoffPlans).where(eq(debtPayoffPlans.id, 1)).get();
+  if (!plan) {
+    db.insert(debtPayoffPlans)
+      .values({ id: 1, strategy: "snowball", extraMonthlyCents: 0 })
+      .run();
+    plan = db.select().from(debtPayoffPlans).where(eq(debtPayoffPlans.id, 1)).get()!;
+  }
+  const drops = db.select().from(debtPayoffDrops).orderBy(asc(debtPayoffDrops.debtId)).all();
+  return { plan, drops };
 }
 
 export function listIncomeTemplates() {

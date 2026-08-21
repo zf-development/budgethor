@@ -19,6 +19,8 @@ import {
 import {
   accountSnapshots,
   accounts,
+  debtPayoffDrops,
+  debtPayoffPlans,
   debts,
   incomeEntries,
   incomeTemplates,
@@ -37,6 +39,7 @@ import {
   toIsoDate,
 } from "@/lib/dates";
 import { nextPrincipalCents } from "@/lib/debts";
+import type { DebtOptimizeStrategy } from "@/lib/debt-optimize";
 import { isIncomeCadence, type IncomeCadence } from "@/lib/income";
 import { newId } from "@/lib/ids";
 import type { CsvImportTarget, CsvMappedRow } from "@/lib/csv-import";
@@ -419,9 +422,13 @@ export async function updateDebt(
     payingSince: string;
     monthlyPaymentCents: number;
     dayOfMonth: number;
+    annualRateBps: number;
   }>,
 ) {
   if (patch.dayOfMonth !== undefined) patch.dayOfMonth = clampDay(patch.dayOfMonth);
+  if (patch.annualRateBps !== undefined) {
+    patch.annualRateBps = Math.max(0, Math.round(patch.annualRateBps));
+  }
   if (patch.accountId) {
     getDb()
       .update(debts)
@@ -448,6 +455,61 @@ export async function deleteDebt(id: string) {
   getDb().delete(debts).where(eq(debts.id, id)).run();
   const now = currentYearMonth();
   generateMonthFromTemplates(now.year, now.month);
+  refresh();
+}
+
+function isStrategy(value: string): value is DebtOptimizeStrategy {
+  return value === "avalanche" || value === "snowball";
+}
+
+export async function updateDebtPayoffPlan(patch: {
+  strategy?: DebtOptimizeStrategy;
+  extraMonthlyCents?: number;
+}) {
+  if (patch.strategy !== undefined && !isStrategy(patch.strategy)) return;
+  if (patch.extraMonthlyCents !== undefined) {
+    patch.extraMonthlyCents = Math.max(0, Math.round(patch.extraMonthlyCents));
+  }
+  getDb().update(debtPayoffPlans).set(patch).where(eq(debtPayoffPlans.id, 1)).run();
+  refresh();
+}
+
+export async function upsertDebtPayoffDrop(input: {
+  debtId: string;
+  amountCents: number;
+  redirectDebtId: string | null;
+}) {
+  const amountCents = Math.max(0, Math.round(input.amountCents));
+  const redirectDebtId =
+    input.redirectDebtId && input.redirectDebtId !== input.debtId ? input.redirectDebtId : null;
+  const db = getDb();
+  const existing = db
+    .select()
+    .from(debtPayoffDrops)
+    .where(eq(debtPayoffDrops.debtId, input.debtId))
+    .get();
+
+  if (amountCents <= 0 && !redirectDebtId) {
+    if (existing) db.delete(debtPayoffDrops).where(eq(debtPayoffDrops.id, existing.id)).run();
+    refresh();
+    return;
+  }
+
+  if (existing) {
+    db.update(debtPayoffDrops)
+      .set({ amountCents, redirectDebtId })
+      .where(eq(debtPayoffDrops.id, existing.id))
+      .run();
+  } else {
+    db.insert(debtPayoffDrops)
+      .values({
+        id: newId(),
+        debtId: input.debtId,
+        amountCents,
+        redirectDebtId,
+      })
+      .run();
+  }
   refresh();
 }
 

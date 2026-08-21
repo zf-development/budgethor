@@ -25,8 +25,11 @@ import {
   DeleteIcon as DeleteIconBase,
   DownloadIcon as DownloadIconBase,
   FileTextIcon as FileTextIconBase,
+  GithubIcon as GithubIconBase,
   HandCoinsIcon as HandCoinsIconBase,
+  HeartPulseIcon as HeartPulseIconBase,
   LayoutGridIcon as LayoutGridIconBase,
+  LinkedinIcon as LinkedinIconBase,
   LoaderCircleIcon as LoaderCircleIconBase,
   MoonIcon as MoonIconBase,
   PlusIcon as PlusIconBase,
@@ -128,8 +131,11 @@ export const CreditCardIcon = withHostHover(CreditCardIconBase);
 export const DeleteIcon = withHostHover(DeleteIconBase);
 export const DownloadIcon = withHostHover(DownloadIconBase);
 export const FileTextIcon = withHostHover(FileTextIconBase);
+export const GithubIcon = withHostHover(GithubIconBase);
 export const HandCoinsIcon = withHostHover(HandCoinsIconBase);
+export const HeartPulseIcon = withHostHover(HeartPulseIconBase);
 export const LayoutGridIcon = withHostHover(LayoutGridIconBase);
+export const LinkedinIcon = withHostHover(LinkedinIconBase);
 export const LoaderCircleIcon = withHostHover(LoaderCircleIconBase);
 export const MoonIcon = withHostHover(MoonIconBase);
 export const PlusIcon = withHostHover(PlusIconBase);

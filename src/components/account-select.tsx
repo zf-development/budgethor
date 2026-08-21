@@ -132,6 +132,8 @@ export function DebtSelect({
   disabled,
   className,
   appearance = "plain",
+  noneLabel = "Pas une dette",
+  excludeIds = [],
 }: {
   debts: Debt[];
   value: string | null;
@@ -140,10 +142,13 @@ export function DebtSelect({
   disabled?: boolean;
   className?: string;
   appearance?: FieldAppearance;
+  noneLabel?: string;
+  excludeIds?: string[];
 }) {
+  const options = debts.filter((debt) => !excludeIds.includes(debt.id));
   const items = {
-    none: "Pas une dette",
-    ...Object.fromEntries(debts.map((debt) => [debt.id, debt.creditor])),
+    none: noneLabel,
+    ...Object.fromEntries(options.map((debt) => [debt.id, debt.creditor])),
   };
 
   return (
@@ -166,8 +171,8 @@ export function DebtSelect({
       </SelectTrigger>
       <SelectContent>
         <SelectGroup>
-          <SelectItem value="none">Pas une dette</SelectItem>
-          {debts.map((debt) => (
+          <SelectItem value="none">{noneLabel}</SelectItem>
+          {options.map((debt) => (
             <SelectItem key={debt.id} value={debt.id}>
               {debt.creditor}
             </SelectItem>

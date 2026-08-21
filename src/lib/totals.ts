@@ -5,6 +5,7 @@ import {
   type InboxUrgency,
   type LineTone,
 } from "@/lib/dates";
+import { monthCashHealth } from "@/lib/financial-health";
 import type { Account, AccountSnapshot, Debt, IncomeEntry, PaymentEntry } from "@/db/schema";
 
 export function totalsFor(incomes: IncomeEntry[], payments: PaymentEntry[]) {
@@ -212,5 +213,13 @@ export function monthDashboard({
     debtTotal: debts.reduce((sum, debt) => sum + debt.balanceCents, 0),
     inbox,
     schedule,
+    health: monthCashHealth({
+      accounts,
+      snapshots,
+      incomes,
+      payments,
+      year,
+      month,
+    }),
   };
 }

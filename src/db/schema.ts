@@ -26,6 +26,25 @@ export const debts = sqliteTable("debts", {
   monthlyPaymentCents: integer("monthly_payment_cents").notNull().default(0),
   dayOfMonth: integer("day_of_month").notNull().default(1),
   payingSince: text("paying_since").notNull().default(""),
+  annualRateBps: integer("annual_rate_bps").notNull().default(0),
+});
+
+export const debtPayoffPlans = sqliteTable("debt_payoff_plans", {
+  id: integer("id").primaryKey().notNull().default(1),
+  strategy: text("strategy", { enum: ["avalanche", "snowball"] })
+    .notNull()
+    .default("snowball"),
+  extraMonthlyCents: integer("extra_monthly_cents").notNull().default(0),
+});
+
+export const debtPayoffDrops = sqliteTable("debt_payoff_drops", {
+  id: text("id").primaryKey(),
+  debtId: text("debt_id")
+    .notNull()
+    .unique()
+    .references(() => debts.id, { onDelete: "cascade" }),
+  amountCents: integer("amount_cents").notNull().default(0),
+  redirectDebtId: text("redirect_debt_id").references(() => debts.id, { onDelete: "set null" }),
 });
 
 export const incomeTemplates = sqliteTable("income_templates", {
@@ -125,6 +144,8 @@ export const paymentEntries = sqliteTable("payment_entries", {
 
 export type Account = typeof accounts.$inferSelect;
 export type Debt = typeof debts.$inferSelect;
+export type DebtPayoffPlan = typeof debtPayoffPlans.$inferSelect;
+export type DebtPayoffDrop = typeof debtPayoffDrops.$inferSelect;
 export type IncomeTemplate = typeof incomeTemplates.$inferSelect;
 export type PaymentTemplate = typeof paymentTemplates.$inferSelect;
 export type Month = typeof months.$inferSelect;

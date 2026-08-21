@@ -31,6 +31,10 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Budgethor",
   description: "Budget personnel en tableur, en local.",
+  icons: {
+    icon: "/icon.png",
+    apple: "/apple-icon.png",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -47,7 +51,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         spaceGroteskHeading.variable,
       )}
     >
-      <body className="flex min-h-full flex-col">
+      <body className="flex min-h-dvh flex-col">
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <ThemeProvider>
           {children}

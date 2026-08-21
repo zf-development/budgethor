@@ -11,6 +11,7 @@ import {
   type OnboardingIncomeInput,
   type OnboardingPaymentInput,
 } from "@/actions/budget";
+import { AppLogo } from "@/components/app-logo";
 import { AccountTypeSelect } from "@/components/account-select";
 import { CadenceSelect } from "@/components/cadence-select";
 import { DatePicker } from "@/components/date-picker";
@@ -137,7 +138,10 @@ export function OnboardingWizard() {
   return (
     <div className="min-h-full bg-background px-4">
       <div className="mx-auto flex max-w-2xl items-center justify-between pt-6">
-        <p className="font-heading text-lg">Budgethor</p>
+        <p className="flex items-center gap-2 font-sans text-lg font-bold tracking-tight">
+          <AppLogo size={32} />
+          Budgethor
+        </p>
         <ThemeToggle />
       </div>
       <WizardShell

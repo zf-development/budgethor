@@ -2,6 +2,7 @@ import Link from "next/link";
 import { HandCoinsIcon, WalletIcon } from "@/components/icons";
 
 import { DebtProgressRow } from "@/components/debt-progress";
+import { FinancialHealthCard } from "@/components/financial-health-card";
 import { MoneyText } from "@/components/money-text";
 import { StatCard } from "@/components/stat-card";
 import { MoneyFlowRow, SummaryRow } from "@/components/summary-row";
@@ -40,9 +41,13 @@ export function DashboardKpis({
   const payoff = debtsPayoffSummary(debts);
 
   return (
-    <div className="grid gap-3 lg:grid-cols-3">
-      <StatCard
-        className="lg:col-span-2"
+    <div className="flex flex-col gap-3">
+      {stats.health ? (
+        <FinancialHealthCard health={stats.health} year={year} month={month} />
+      ) : null}
+      <div className="grid gap-3 lg:grid-cols-3">
+        <StatCard
+          className="lg:col-span-2"
         label={`Après les paiements prévus · ${monthEndLabel}`}
         icon={WalletIcon}
         badge={leftoverBadge}
@@ -142,6 +147,7 @@ export function DashboardKpis({
           </>
         ) : null}
       </StatCard>
+      </div>
     </div>
   );
 }
