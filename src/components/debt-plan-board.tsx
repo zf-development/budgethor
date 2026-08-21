@@ -20,13 +20,14 @@ function isStrategy(value: string | undefined): value is DebtOptimizeStrategy {
   return value === "avalanche" || value === "snowball";
 }
 
-function savedCopy(monthsSaved: number | null, paidOff: boolean) {
-  if (!paidOff) return "Trop long à estimer avec ces paiements.";
-  if (monthsSaved === null) return "Plus tôt que le plan actuel, qui ne suffit pas.";
-  if (monthsSaved === 0) return "Même durée que sans redirection.";
-  const label = formatMonthCount(monthsSaved);
+function savedCopy(timing: { monthsSaved: number | null; paidOff: boolean; currentMonths: number | null }) {
+  if (!timing.paidOff) return "Trop long à estimer avec ces paiements.";
+  if (timing.currentMonths === null) return "Ajoute une mensualité à chaque dette pour comparer.";
+  if (timing.monthsSaved === null) return "—";
+  if (timing.monthsSaved === 0) return "Même durée qu’aujourd’hui.";
+  const label = formatMonthCount(timing.monthsSaved);
   if (!label) return "—";
-  return monthsSaved === 1 ? `${label} plus tôt` : `${label} plus tôt`;
+  return `${label} plus tôt`;
 }
 
 export function DebtPlanBoard({
@@ -56,6 +57,7 @@ export function DebtPlanBoard({
   if (debts.every((debt) => debt.balanceCents <= 0)) return null;
 
   const selected = view.estimate?.plans[plan.strategy] ?? null;
+  const timing = view.timing;
 
   return (
     <div className="flex flex-col gap-6">
@@ -112,33 +114,36 @@ export function DebtPlanBoard({
         <p className="text-muted-foreground text-sm">{DEBT_STRATEGIES[plan.strategy].summary}</p>
       </div>
 
-      {selected ? (
-        <div className="grid gap-3 sm:grid-cols-3">
-          <StatCard
-            label="Temps gagné"
-            icon={CalendarDaysIcon}
-            value={savedCopy(selected.monthsSaved, selected.paidOff)}
-          />
-          <StatCard
-            label="Économie d’intérêts"
-            icon={WalletIcon}
-            value={
+      <div className="grid gap-3 sm:grid-cols-3">
+        <StatCard
+          label="Sans redirection"
+          icon={CalendarDaysIcon}
+          value={formatMonthCount(timing.currentMonths) ?? "—"}
+          hint="Temps jusqu’à la dernière dette, en gardant chaque mensualité telle quelle."
+        />
+        <StatCard
+          label="Avec ce plan"
+          icon={HandCoinsIcon}
+          value={
+            timing.paidOff ? (formatMonthCount(timing.planMonths) ?? "—") : "Trop long à estimer"
+          }
+          hint="Même calcul, avec tes drops et les paiements redirigés."
+        />
+        <StatCard
+          label="Temps gagné"
+          icon={WalletIcon}
+          value={savedCopy(timing)}
+          hint={
+            selected && selected.interestSavedCents > 0 ? (
               <>
-                ~<MoneyText cents={selected.interestSavedCents} />
+                Économie d’intérêts estimée : ~<MoneyText cents={selected.interestSavedCents} />
               </>
-            }
-          />
-          <StatCard
-            label="Durée avec ce plan"
-            icon={HandCoinsIcon}
-            value={
-              selected.paidOff
-                ? (formatMonthCount(selected.months) ?? "—")
-                : "Trop long à estimer"
-            }
-          />
-        </div>
-      ) : null}
+            ) : (
+              "Les mois restants dans les tableaux sont à ce paiement, pas la durée totale."
+            )
+          }
+        />
+      </div>
 
       {view.phases.map((phase) => (
         <DebtPlanPhaseTable

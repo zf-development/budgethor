@@ -17,14 +17,14 @@ const START_COLUMNS = [
   { key: "redirect", header: "Rediriger vers" },
   { key: "amount", header: "Montant" },
   { key: "payment", header: "Paiement mensuel" },
-  { key: "months", header: "Nombre de mois", className: "w-36" },
+  { key: "months", header: "Mois restants", className: "w-36" },
 ];
 
 const PHASE_COLUMNS = [
   { key: "creditor", header: "Créancier" },
   { key: "amount", header: "Montant" },
   { key: "payment", header: "Paiement mensuel" },
-  { key: "months", header: "Nombre de mois", className: "w-36" },
+  { key: "months", header: "Mois restants", className: "w-36" },
 ];
 
 function PaymentCell({ row }: { row: DebtPlanPhaseRow }) {

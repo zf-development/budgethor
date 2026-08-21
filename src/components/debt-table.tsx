@@ -33,7 +33,7 @@ export function DebtTable({ debts, accounts }: { debts: Debt[]; accounts: Accoun
   return (
     <SpreadsheetTable
       title="Créanciers"
-      description="Lie une dette à un compte (ex. carte de crédit) : les charges sur ce compte l’augmentent, un virement depuis un compte d’argent la diminue. La mensualité s’ajoute aux paiements récurrents."
+      description="Compte lié : les charges l’augmentent, un virement la diminue."
       columns={COLUMNS}
       addLabel="Ajouter une dette"
       onAdd={() => {

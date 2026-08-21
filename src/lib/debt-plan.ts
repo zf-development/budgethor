@@ -7,6 +7,7 @@ import {
   type DebtOptimizeStrategy,
 } from "@/lib/debt-optimize";
 import { remainingMonthsExact } from "@/lib/money";
+import { independentPayoffMonths } from "@/lib/debts";
 
 export type DebtPlanDropInput = {
   debtId: string;
@@ -45,12 +46,21 @@ export type DebtPlanPhase = {
   subtitle: string | null;
   isStart: boolean;
   paidOffLabel: string | null;
+  monthsElapsed: number;
   rows: DebtPlanPhaseRow[];
+};
+
+export type DebtPlanTiming = {
+  currentMonths: number | null;
+  planMonths: number;
+  paidOff: boolean;
+  monthsSaved: number | null;
 };
 
 export type DebtPlanView = {
   recommended: DebtOptimizeStrategy;
   phases: DebtPlanPhase[];
+  timing: DebtPlanTiming;
   estimate: DebtOptimizeResult | null;
 };
 
@@ -117,7 +127,7 @@ function cloneRows(rows: PlanRow[]) {
 export function buildDebtPlanPhases(
   debts: DebtOptimizeInput[],
   config: DebtPlanConfig,
-): DebtPlanPhase[] {
+): { phases: DebtPlanPhase[]; months: number; paidOff: boolean } {
   const drops = dropByDebtId(config.drops);
   const extra = Math.max(0, Math.round(config.extraMonthlyCents));
 
@@ -173,6 +183,7 @@ export function buildDebtPlanPhases(
     subtitle: paidDropLabel ? `Drops appliqués : ${paidDropLabel} soldée(s).` : null,
     isStart: true,
     paidOffLabel: paidDropLabel,
+    monthsElapsed: 0,
     rows: toRows(cloneRows(startRows)),
   });
 
@@ -203,10 +214,11 @@ export function buildDebtPlanPhases(
         key: `after-${paid.id}-${month}`,
         title: `Après ${paid.creditor}`,
         subtitle: target
-          ? `Paiement de ${paid.creditor} redirigé vers ${target.creditor}.`
-          : null,
+          ? `Mois ${month} · paiement de ${paid.creditor} redirigé vers ${target.creditor}.`
+          : `Mois ${month}.`,
         isStart: false,
         paidOffLabel: paid.creditor,
+        monthsElapsed: month,
         rows: toRows(cloneRows(stillOpen)),
       });
     }
@@ -214,7 +226,11 @@ export function buildDebtPlanPhases(
     if (!sim.some((row) => row.balanceCents > 0 && row.paymentCents > 0)) break;
   }
 
-  return phases;
+  return {
+    phases,
+    months: month,
+    paidOff: !sim.some((row) => row.balanceCents > 0),
+  };
 }
 
 export function evaluateDebtPlan(
@@ -233,9 +249,21 @@ export function evaluateDebtPlan(
     .filter((debt) => debt.balanceCents <= 0)
     .reduce((sum, debt) => sum + Math.max(0, debt.monthlyPaymentCents), 0);
 
+  const built = buildDebtPlanPhases(debts, config);
+  const currentMonths = independentPayoffMonths(debts);
+  const planMonths = built.months;
+  const monthsSaved =
+    built.paidOff && currentMonths !== null ? Math.max(0, currentMonths - planMonths) : null;
+
   return {
     recommended: recommendedDebtStrategy(debts),
-    phases: buildDebtPlanPhases(debts, config),
+    phases: built.phases,
+    timing: {
+      currentMonths,
+      planMonths,
+      paidOff: built.paidOff,
+      monthsSaved,
+    },
     estimate: optimizeDebts(afterDrops, config.extraMonthlyCents + freedCents),
   };
 }

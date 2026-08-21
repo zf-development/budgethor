@@ -27,7 +27,12 @@ export function DebtPayoffSummary({ debts }: { debts: Debt[] }) {
           </>
         }
       />
-      <StatCard label="Durée estimée" icon={CalendarDaysIcon} value={duration} />
+      <StatCard
+        label="Durée estimée"
+        icon={CalendarDaysIcon}
+        value={duration}
+        hint="Jusqu’à la dernière dette, sans rediriger les mensualités."
+      />
     </div>
   );
 }

@@ -65,13 +65,23 @@ export function debtNextStep(
   };
 }
 
+export function independentPayoffMonths(
+  debts: Pick<Debt, "balanceCents" | "monthlyPaymentCents">[],
+) {
+  const active = debts.filter((debt) => debt.balanceCents > 0);
+  if (active.length === 0) return 0;
+  const months = active.map((debt) => remainingMonths(debt.balanceCents, debt.monthlyPaymentCents));
+  if (months.some((value) => value === null)) return null;
+  return Math.max(...months);
+}
+
 export function debtsPayoffSummary(debts: Pick<Debt, "balanceCents" | "monthlyPaymentCents">[]) {
   const balanceCents = debts.reduce((sum, debt) => sum + debt.balanceCents, 0);
   const monthlyPaymentCents = debts.reduce((sum, debt) => sum + debt.monthlyPaymentCents, 0);
   return {
     balanceCents,
     monthlyPaymentCents,
-    estimatedMonths: remainingMonths(balanceCents, monthlyPaymentCents),
+    estimatedMonths: independentPayoffMonths(debts),
   };
 }
 
