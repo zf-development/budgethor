@@ -1,21 +1,29 @@
-# Budgethor
+<p align="center">
+  <img src="public/budgethor-logo.jpg" width="96" alt="Budgethor" />
+</p>
 
-Application locale de suivi financier : **revenus**, **dépenses** et **dettes**, organisés par mois.
+<h1 align="center">Budgethor</h1>
 
-Budgethor répond à une question simple : *combien me reste-t-il une fois les paies et les paiements prévus pris en compte ?* Le tableau de bord distingue l’argent déjà disponible du solde prévu en fin de mois, et relie les dettes aux comptes (par exemple une carte de crédit) pour que les charges et les remboursements fassent bouger les soldes.
+<p align="center">
+  App locale pour suivre <strong>paies</strong>, <strong>paiements</strong> et <strong>dettes</strong> — sans tracking.
+</p>
 
-Les montants sont gérés en cents, affichés en dollars canadiens. Les données restent sur la machine, dans une base SQLite.
+Budgethor répond à une question simple : *combien me reste-t-il une fois les paies et les paiements prévus pris en compte ?*
+
+Le tableau de bord sépare l’argent **déjà disponible** du solde **prévu en fin de mois**, et lit le mois (Bonne, À surveiller, Serrée) plutôt que de seulement additionner. Les dettes peuvent être liées à un compte : les charges l’augmentent, un virement la diminue.
+
+Les montants sont stockés en **cents**, affichés en dollars canadiens. Tout reste sur la machine, dans une base SQLite.
 
 ## Fonctionnalités
 
-- **Vue d’ensemble mensuelle** — solde disponible maintenant, reste prévu après paiements, revenus reçus / attendus, paiements payés / dus, prochaine échéance.
-- **Paies et paiements** — lignes éditables (libellé, jour, montant prévu / réel, compte), modèles récurrents (hebdo, aux deux semaines, mensuel).
-- **Comptes** — actifs (compte bancaire) et passifs (carte de crédit), avec instantané d’ouverture par mois.
-- **Dettes** — solde, mensualité, progression du remboursement, estimation de durée, date de début de paiement et capital initial. Une dette peut être liée à un compte : une dépense sur ce compte augmente le solde, un paiement depuis un autre compte le diminue.
-- **File « À traiter »** — paiements en retard et échéances à venir.
-- **Import CSV** — mapping des colonnes vers paies, paiements, modèles récurrents ou dettes.
-- **Assistant de démarrage** — comptes, revenus, charges et dettes pour générer le premier mois.
-- **Thème clair / sombre** et navigation entre les mois déjà créés.
+- **Situation du mois** — disponible maintenant, reste prévu, revenus et paiements, plus une lecture de santé financière (seuil à 100 $ ou solde négatif, avec la date).
+- **À traiter** — retards, échéances du jour et des 7 prochains jours, liste condensée.
+- **Comptes** — argent (banque) ou crédit (carte), solde d’ouverture reporté du mois précédent.
+- **Paies et paiements** — lignes éditables, modèles récurrents (hebdo, aux deux semaines, mensuel) éditables en place. Les paies dues sont marquées reçues automatiquement.
+- **Dettes** — solde, mensualité, progression, prochain paiement. Simulation avalanche / snowball, drops et redirections, sans changer les soldes réels.
+- **Mois** — navigation limitée au mois courant + 1. Historique des mois déjà générés.
+- **Import CSV** — mapping vers paies, paiements, récurrents ou dettes.
+- **Assistant de démarrage** et **thème** clair / sombre.
 
 ## Stack
 
@@ -27,15 +35,18 @@ Les montants sont gérés en cents, affichés en dollars canadiens. Les données
 | Mutations | Server Actions |
 | Runtime | Bun |
 
-Les montants ne passent jamais par des `float` : tout est stocké en **cents** et formaté à l’affichage.
+Les montants ne passent jamais par des `float`.
 
 ## Architecture
 
-L’app est volontairement **monolithe et locale** : pas d’API publique, pas de compte cloud. Le schéma vit dans `src/db/schema.ts`, les lectures dans `src/db/queries.ts`, les écritures dans `src/actions/budget.ts`.
+Monolithe local : pas d’API publique, pas de compte cloud.
 
-Logique métier extraite dans `src/lib/` (totaux du mois, dettes, import CSV, comptes) pour rester testable et réutilisable côté UI. Les composants métier (`dashboard-kpis`, tables type tableur, dialogues de confirmation) s’appuient sur des primitives UI dans `src/components/ui/`.
+- Schéma : `src/db/schema.ts`
+- Lectures : `src/db/queries.ts`
+- Écritures : `src/actions/budget.ts`
+- Métier : `src/lib/` (totaux, santé financière, dettes, plan de remboursement, CSV)
 
-Les migrations SQLite sont appliquées au démarrage pour faire évoluer une base existante sans outil séparé.
+Les migrations SQLite s’appliquent au démarrage.
 
 ## Démarrage
 
@@ -46,21 +57,21 @@ bun install
 bun dev
 ```
 
-Ouvrir [http://localhost:3000](http://localhost:3000). Au premier lancement, l’assistant de configuration crée les comptes et le mois courant.
+Ouvrir [http://localhost:3000](http://localhost:3000). Au premier lancement, l’assistant crée les comptes et le mois courant.
 
 ```bash
 bun run build
 bun start
 ```
 
-La base est créée dans `data/budgethor.db` (ignorée par Git). Chemin alternatif : variable `SQLITE_PATH`.
+Base : `data/budgethor.db` (ignorée par Git). Autre chemin : `SQLITE_PATH`.
 
 ## Confidentialité
 
-Aucune donnée budgétaire n’est envoyée à un serveur. Tout reste dans le fichier SQLite local. Convient à un usage personnel, pas à un déploiement multi-utilisateurs.
+Aucune donnée budgétaire n’est envoyée à un serveur. Usage personnel, pas un déploiement multi-utilisateurs.
 
-## Mode agent
+## Auteur
 
-Le dépôt sert aussi à montrer un flux **assisté par agents** : briefs fonctionnels, implémentation, puis itérations (dashboard, dettes, import CSV) jusqu’à un produit utilisable.
+[Zachary Gagné](https://github.com/zf-development) — développeur indépendant à Montréal.
 
-La direction reste humaine — métier, UX, ce qui entre dans Git. L’agent accélère le code ; le résultat doit se tenir tout seul : TypeScript, règles de soldes explicites, composants réutilisables, données locales. Pas un prototype jetable.
+[GitHub](https://github.com/zf-development) · [LinkedIn](https://www.linkedin.com/in/zgagne)
