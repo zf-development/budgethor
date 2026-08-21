@@ -85,6 +85,7 @@ function DropdownMenuItem({
   return (
     <MenuPrimitive.Item
       data-slot="dropdown-menu-item"
+      data-icon-hover=""
       data-inset={inset}
       data-variant={variant}
       className={cn(

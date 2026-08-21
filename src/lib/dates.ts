@@ -21,6 +21,16 @@ export function isPastYearMonth(target: YearMonth, now = currentYearMonth()) {
   return compareYearMonth(target, now) < 0;
 }
 
+export const VISIBLE_FUTURE_MONTHS = 1;
+
+export function maxVisibleYearMonth(now = currentYearMonth()) {
+  return addMonths(now.year, now.month, VISIBLE_FUTURE_MONTHS);
+}
+
+export function isBeyondVisibleFuture(target: YearMonth, now = currentYearMonth()) {
+  return compareYearMonth(target, maxVisibleYearMonth(now)) > 0;
+}
+
 export function hasYearMonth(months: YearMonth[], year: number, month: number) {
   return months.some((row) => row.year === year && row.month === month);
 }
@@ -31,6 +41,7 @@ export function canOpenMonth(
   knownMonths: YearMonth[],
   now = currentYearMonth(),
 ) {
+  if (isBeyondVisibleFuture({ year, month }, now)) return false;
   if (!isPastYearMonth({ year, month }, now)) return true;
   return hasYearMonth(knownMonths, year, month);
 }

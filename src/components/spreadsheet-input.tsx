@@ -25,6 +25,8 @@ export function SpreadsheetInput({
   ariaLabel,
   suffix,
   appearance = "plain",
+  commitOnChange = false,
+  autoFocus = false,
 }: {
   id?: string;
   value: string;
@@ -35,6 +37,8 @@ export function SpreadsheetInput({
   ariaLabel: string;
   suffix?: string;
   appearance?: FieldAppearance;
+  commitOnChange?: boolean;
+  autoFocus?: boolean;
 }) {
   const [draft, setDraft] = useState(value);
   const [editing, setEditing] = useState(appearance === "field");
@@ -52,8 +56,8 @@ export function SpreadsheetInput({
     node.select();
   }, [appearance, editing]);
 
-  function commit() {
-    if (draft !== value) onCommit(draft);
+  function commit(next = draft) {
+    if (next !== value) onCommit(next);
     if (appearance === "plain") setEditing(false);
   }
 
@@ -65,12 +69,19 @@ export function SpreadsheetInput({
   const shared = {
     id,
     ref: inputRef,
+    autoFocus,
     "aria-label": ariaLabel,
     value: draft,
     placeholder,
     inputMode,
-    onChange: (event: React.ChangeEvent<HTMLInputElement>) => setDraft(event.target.value),
-    onBlur: commit,
+    onChange: (event: React.ChangeEvent<HTMLInputElement>) => {
+      const next = event.target.value;
+      setDraft(next);
+      if (commitOnChange) onCommit(next);
+    },
+    onBlur: () => {
+      if (!commitOnChange) commit();
+    },
     onKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => {
       if (event.key === "Enter") event.currentTarget.blur();
       if (event.key === "Escape") {

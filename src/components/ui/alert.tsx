@@ -27,6 +27,7 @@ function Alert({
   return (
     <div
       data-slot="alert"
+      data-icon-hover=""
       role="alert"
       className={cn(alertVariants({ variant }), className)}
       {...props}

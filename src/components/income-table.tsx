@@ -46,7 +46,7 @@ export function IncomeTable({
   return (
     <SpreadsheetTable
       title="Paies"
-      description="Les dates sont générées par la répétition du modèle. Tu peux aussi ajouter une paie hors cycle."
+      description="Les dates sont générées par la répétition de la paie. Tu peux aussi ajouter une paie hors cycle."
       columns={[
         { key: "received", header: "Reçu", className: "w-16" },
         { key: "day", header: "Date", className: "w-40" },
@@ -90,7 +90,7 @@ export function IncomeTable({
           colSpan={9}
           icon={CircleDollarSignIcon}
           title="Aucune paie ce mois-ci"
-          description="Ajoute une paie ou vérifie tes modèles récurrents."
+          description="Ajoute une paie ou vérifie tes paies récurrentes."
         />
       ) : (
         rows.map((row) => {

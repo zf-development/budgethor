@@ -11,9 +11,18 @@ import {
   paymentEntries,
   paymentTemplates,
   settings,
+  type AccountSnapshot,
+  type IncomeEntry,
   type PaymentEntry,
 } from "@/db/schema";
-import { clampDay, currentYearMonth, isPastYearMonth } from "@/lib/dates";
+import { accountMonthStories } from "@/lib/accounts";
+import {
+  addMonths,
+  clampDay,
+  currentYearMonth,
+  isBeyondVisibleFuture,
+  isPastYearMonth,
+} from "@/lib/dates";
 import { debtPaymentLabel, paymentDebtEffect } from "@/lib/debts";
 import { incomeDaysInMonth, isIncomeCadence } from "@/lib/income";
 import { newId } from "@/lib/ids";
@@ -130,6 +139,52 @@ export function getOrCreateMonth(year: number, month: number) {
   return created;
 }
 
+function monthLedger(monthId: string) {
+  const db = getDb();
+  return {
+    snapshots: db
+      .select()
+      .from(accountSnapshots)
+      .where(eq(accountSnapshots.monthId, monthId))
+      .all(),
+    incomes: db.select().from(incomeEntries).where(eq(incomeEntries.monthId, monthId)).all(),
+    payments: db.select().from(paymentEntries).where(eq(paymentEntries.monthId, monthId)).all(),
+  };
+}
+
+function monthHasActivity(incomes: IncomeEntry[], payments: PaymentEntry[]) {
+  return incomes.some((row) => row.received) || payments.some((row) => row.paid);
+}
+
+function closingBalancesByAccount(
+  snapshots: AccountSnapshot[],
+  incomes: IncomeEntry[],
+  payments: PaymentEntry[],
+) {
+  const stories = accountMonthStories(listAccounts(), snapshots, incomes, payments, listDebts());
+  return new Map(stories.map((story) => [story.account.id, story.projectedCents]));
+}
+
+function previousClosingByAccount(year: number, month: number) {
+  const previous = addMonths(year, month, -1);
+  const monthRow = findMonth(previous.year, previous.month);
+  if (!monthRow) return new Map<string, number>();
+  const ledger = monthLedger(monthRow.id);
+  return closingBalancesByAccount(ledger.snapshots, ledger.incomes, ledger.payments);
+}
+
+function applyOpeningBalances(monthId: string, openings: Map<string, number>) {
+  const db = getDb();
+  for (const snapshot of monthLedger(monthId).snapshots) {
+    const opening = openings.get(snapshot.accountId);
+    if (opening === undefined || snapshot.openingBalanceCents === opening) continue;
+    db.update(accountSnapshots)
+      .set({ openingBalanceCents: opening })
+      .where(eq(accountSnapshots.id, snapshot.id))
+      .run();
+  }
+}
+
 export function generateMonthFromTemplates(year: number, month: number) {
   const db = getDb();
   syncDebtPaymentTemplates();
@@ -140,6 +195,7 @@ export function generateMonthFromTemplates(year: number, month: number) {
     .from(accountSnapshots)
     .where(eq(accountSnapshots.monthId, monthRow.id))
     .all();
+  const carried = previousClosingByAccount(year, month);
 
   for (const account of allAccounts) {
     if (snapshots.some((snapshot) => snapshot.accountId === account.id)) continue;
@@ -148,9 +204,14 @@ export function generateMonthFromTemplates(year: number, month: number) {
         id: newId(),
         monthId: monthRow.id,
         accountId: account.id,
-        openingBalanceCents: 0,
+        openingBalanceCents: carried.get(account.id) ?? 0,
       })
       .run();
+  }
+
+  const ledger = monthLedger(monthRow.id);
+  if (!monthHasActivity(ledger.incomes, ledger.payments) && carried.size > 0) {
+    applyOpeningBalances(monthRow.id, carried);
   }
 
   const incomeTpls = listIncomeTemplates();
@@ -234,12 +295,28 @@ export function generateMonthFromTemplates(year: number, month: number) {
     }
   }
 
+  const next = addMonths(year, month, 1);
+  const nextMonth = findMonth(next.year, next.month);
+  if (nextMonth) {
+    const nextLedger = monthLedger(nextMonth.id);
+    if (!monthHasActivity(nextLedger.incomes, nextLedger.payments)) {
+      const current = monthLedger(monthRow.id);
+      applyOpeningBalances(
+        nextMonth.id,
+        closingBalancesByAccount(current.snapshots, current.incomes, current.payments),
+      );
+    }
+  }
+
   return monthRow;
 }
 
 export function getMonthView(year: number, month: number) {
+  const now = currentYearMonth();
+  if (isBeyondVisibleFuture({ year, month }, now)) return null;
+
   const existing = findMonth(year, month);
-  if (!existing && isPastYearMonth({ year, month }, currentYearMonth())) {
+  if (!existing && isPastYearMonth({ year, month }, now)) {
     return null;
   }
 

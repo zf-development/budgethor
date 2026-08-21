@@ -1,36 +1,66 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Budgethor
 
-## Getting Started
+Application locale de suivi financier : **revenus**, **dépenses** et **dettes**, organisés par mois.
 
-First, run the development server:
+Budgethor répond à une question simple : *combien me reste-t-il une fois les paies et les paiements prévus pris en compte ?* Le tableau de bord distingue l’argent déjà disponible du solde prévu en fin de mois, et relie les dettes aux comptes (par exemple une carte de crédit) pour que les charges et les remboursements fassent bouger les soldes.
+
+Les montants sont gérés en cents, affichés en dollars canadiens. Les données restent sur la machine, dans une base SQLite.
+
+## Fonctionnalités
+
+- **Vue d’ensemble mensuelle** — solde disponible maintenant, reste prévu après paiements, revenus reçus / attendus, paiements payés / dus, prochaine échéance.
+- **Paies et paiements** — lignes éditables (libellé, jour, montant prévu / réel, compte), modèles récurrents (hebdo, aux deux semaines, mensuel).
+- **Comptes** — actifs (compte bancaire) et passifs (carte de crédit), avec instantané d’ouverture par mois.
+- **Dettes** — solde, mensualité, progression du remboursement, estimation de durée, date de début de paiement et capital initial. Une dette peut être liée à un compte : une dépense sur ce compte augmente le solde, un paiement depuis un autre compte le diminue.
+- **File « À traiter »** — paiements en retard et échéances à venir.
+- **Import CSV** — mapping des colonnes vers paies, paiements, modèles récurrents ou dettes.
+- **Assistant de démarrage** — comptes, revenus, charges et dettes pour générer le premier mois.
+- **Thème clair / sombre** et navigation entre les mois déjà créés.
+
+## Stack
+
+| Couche | Choix |
+| --- | --- |
+| App | Next.js 16 (App Router), React 19, TypeScript |
+| UI | Tailwind CSS 4, shadcn/ui (Base UI) |
+| Données | SQLite (`better-sqlite3`), Drizzle ORM |
+| Mutations | Server Actions |
+| Runtime | Bun |
+
+Les montants ne passent jamais par des `float` : tout est stocké en **cents** et formaté à l’affichage.
+
+## Architecture
+
+L’app est volontairement **monolithe et locale** : pas d’API publique, pas de compte cloud. Le schéma vit dans `src/db/schema.ts`, les lectures dans `src/db/queries.ts`, les écritures dans `src/actions/budget.ts`.
+
+Logique métier extraite dans `src/lib/` (totaux du mois, dettes, import CSV, comptes) pour rester testable et réutilisable côté UI. Les composants métier (`dashboard-kpis`, tables type tableur, dialogues de confirmation) s’appuient sur des primitives UI dans `src/components/ui/`.
+
+Les migrations SQLite sont appliquées au démarrage pour faire évoluer une base existante sans outil séparé.
+
+## Démarrage
+
+Prérequis : [Bun](https://bun.sh) 1.3+.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
+bun install
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Ouvrir [http://localhost:3000](http://localhost:3000). Au premier lancement, l’assistant de configuration crée les comptes et le mois courant.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+bun run build
+bun start
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+La base est créée dans `data/budgethor.db` (ignorée par Git). Chemin alternatif : variable `SQLITE_PATH`.
 
-## Learn More
+## Confidentialité
 
-To learn more about Next.js, take a look at the following resources:
+Aucune donnée budgétaire n’est envoyée à un serveur. Tout reste dans le fichier SQLite local. Convient à un usage personnel, pas à un déploiement multi-utilisateurs.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Mode agent
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Le dépôt sert aussi à montrer un flux **assisté par agents** : briefs fonctionnels, implémentation, puis itérations (dashboard, dettes, import CSV) jusqu’à un produit utilisable.
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+La direction reste humaine — métier, UX, ce qui entre dans Git. L’agent accélère le code ; le résultat doit se tenir tout seul : TypeScript, règles de soldes explicites, composants réutilisables, données locales. Pas un prototype jetable.

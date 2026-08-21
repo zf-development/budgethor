@@ -18,6 +18,7 @@ import {
   EmptyHeader,
   EmptyTitle,
 } from "@/components/ui/empty";
+import { FieldGroup } from "@/components/ui/field";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 
@@ -26,16 +27,20 @@ export function RecurringList({
   description,
   onAdd,
   addLabel,
+  addDisabled,
   emptyTitle,
   emptyDescription,
+  draft,
   children,
 }: {
   title: React.ReactNode;
   description?: React.ReactNode;
   onAdd?: () => void;
   addLabel?: string;
+  addDisabled?: boolean;
   emptyTitle: string;
   emptyDescription: string;
+  draft?: React.ReactNode;
   children: React.ReactNode;
 }) {
   const items = Children.toArray(children).filter(Boolean);
@@ -47,14 +52,14 @@ export function RecurringList({
         {description ? <CardDescription>{description}</CardDescription> : null}
         {onAdd ? (
           <CardAction>
-            <Button variant="outline" size="sm" onClick={onAdd}>
+            <Button variant="outline" size="sm" disabled={addDisabled} onClick={onAdd}>
               <PlusIcon size={16} data-icon="inline-start" />
               {addLabel ?? "Ajouter"}
             </Button>
           </CardAction>
         ) : null}
       </CardHeader>
-      {items.length === 0 ? (
+      {items.length === 0 && !draft ? (
         <Empty className="border-0 py-6">
           <EmptyHeader>
             <EmptyTitle>{emptyTitle}</EmptyTitle>
@@ -63,6 +68,12 @@ export function RecurringList({
         </Empty>
       ) : (
         <div className="flex flex-col">
+          {draft ? (
+            <>
+              {draft}
+              {items.length > 0 ? <Separator /> : null}
+            </>
+          ) : null}
           {items.map((child, index) => (
             <div key={isValidElement(child) && child.key != null ? String(child.key) : index}>
               {index > 0 ? <Separator /> : null}
@@ -101,7 +112,9 @@ export function RecurringRow({
         aria-expanded={open}
         onClick={() => setOpen((next) => !next)}
       />
-      {open ? <div className="px-(--card-spacing) pb-3">{children}</div> : null}
+      {open ? (
+        <div className="flex flex-col items-start gap-4 px-(--card-spacing) pt-5 pb-4">{children}</div>
+      ) : null}
     </div>
   );
 }
@@ -114,7 +127,7 @@ export function RecurringItem({
   expanded = false,
   className,
   ...props
-}: React.ComponentProps<typeof Button> & {
+}: Omit<React.ComponentProps<typeof Button>, "value"> & {
   title: string;
   summary: React.ReactNode;
   value?: React.ReactNode;
@@ -152,4 +165,25 @@ export function RecurringItem({
 
 export function RecurringBadge({ children }: { children: React.ReactNode }) {
   return <Badge variant="secondary">{children}</Badge>;
+}
+
+export function RecurringFields({ children }: { children: React.ReactNode }) {
+  return (
+    <FieldGroup className="gap-6 sm:grid sm:grid-cols-2 [&_[data-slot=field]]:gap-1.5">{children}</FieldGroup>
+  );
+}
+
+export function RecurringDraft({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col items-start gap-4 bg-muted/40 px-(--card-spacing) pt-5 pb-4">
+      <p className="text-sm font-medium">{title}</p>
+      {children}
+    </div>
+  );
 }

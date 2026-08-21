@@ -29,6 +29,7 @@ import {
 import {
   clampDay,
   currentYearMonth,
+  isBeyondVisibleFuture,
   isValidYearMonth,
   monthPath,
   parseIsoDate,
@@ -253,6 +254,7 @@ export async function deleteAccount(id: string) {
 
 export async function openHistoryMonth(year: number, month: number) {
   if (!isValidYearMonth(year, month)) return;
+  if (isBeyondVisibleFuture({ year, month })) return;
   generateMonthFromTemplates(year, month);
   refresh();
   redirect(monthPath(year, month, { history: "1" }));
@@ -267,19 +269,27 @@ export async function updateSnapshot(id: string, openingBalanceCents: number) {
   refresh();
 }
 
-export async function createIncomeTemplate(accountId: string) {
-  const dates = incomeTemplateDates(todayIsoDate());
+export async function createIncomeTemplate(input: {
+  accountId: string;
+  label?: string;
+  cadence?: IncomeCadence;
+  nextPayDate?: string;
+  expectedAmountCents?: number;
+  notes?: string;
+}) {
+  const cadence = input.cadence && isIncomeCadence(input.cadence) ? input.cadence : "biweek";
+  const dates = incomeTemplateDates(input.nextPayDate || todayIsoDate());
   getDb()
     .insert(incomeTemplates)
     .values({
       id: newId(),
-      accountId,
-      label: "Paie",
-      cadence: "biweek",
+      accountId: input.accountId,
+      label: input.label?.trim() || "Paie",
+      cadence,
       nextPayDate: dates.nextPayDate,
       dayOfMonth: dates.dayOfMonth,
-      expectedAmountCents: 0,
-      notes: "",
+      expectedAmountCents: input.expectedAmountCents ?? 0,
+      notes: input.notes?.trim() ?? "",
     })
     .run();
   const now = currentYearMonth();
@@ -322,17 +332,24 @@ export async function deleteIncomeTemplate(id: string) {
   refresh();
 }
 
-export async function createPaymentTemplate(accountId: string) {
+export async function createPaymentTemplate(input: {
+  accountId: string;
+  label?: string;
+  dayOfMonth?: number;
+  expectedAmountCents?: number;
+  notes?: string;
+  debtId?: string | null;
+}) {
   getDb()
     .insert(paymentTemplates)
     .values({
       id: newId(),
-      accountId,
-      label: "Facture",
-      dayOfMonth: 1,
-      expectedAmountCents: 0,
-      notes: "",
-      debtId: null,
+      accountId: input.accountId,
+      label: input.label?.trim() || "Facture",
+      dayOfMonth: input.dayOfMonth !== undefined ? clampDay(input.dayOfMonth) : 1,
+      expectedAmountCents: input.expectedAmountCents ?? 0,
+      notes: input.notes?.trim() ?? "",
+      debtId: input.debtId ?? null,
       fromDebt: false,
     })
     .run();

@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { CircleHelpIcon, RefreshCcwIcon } from "@/components/icons";
 
 import {
@@ -11,12 +11,15 @@ import {
   reopenOnboarding,
   updateAccount,
 } from "@/actions/budget";
+import { AccountDraftRow } from "@/components/account-draft-row";
 import { AccountTypeSelect } from "@/components/account-select";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { CsvImportDialog } from "@/components/csv-import-dialog";
 import { DeleteRowButton } from "@/components/delete-row-button";
+import { IncomeTemplateDraft } from "@/components/income-template-draft";
 import { IncomeTemplateItem } from "@/components/income-template-item";
 import { PageHeader } from "@/components/page-header";
+import { PaymentTemplateDraft } from "@/components/payment-template-draft";
 import { PaymentTemplateItem } from "@/components/payment-template-item";
 import { RecurringList } from "@/components/recurring-list";
 import { SpreadsheetInput } from "@/components/spreadsheet-input";
@@ -47,13 +50,16 @@ export function SettingsView({
   sqlitePath: string;
 }) {
   const [, startTransition] = useTransition();
+  const [accountDraft, setAccountDraft] = useState(false);
+  const [incomeDraft, setIncomeDraft] = useState(false);
+  const [paymentDraft, setPaymentDraft] = useState(false);
   const firstAccountId = accounts[0]?.id;
 
   return (
     <div className="flex flex-col gap-8">
       <PageHeader
         title="Réglages"
-        description="Comptes d’argent ou de crédit, modèles récurrents, base locale."
+        description="Comptes d’argent ou de crédit, paies et factures récurrentes, base locale."
       />
 
       <SpreadsheetTable
@@ -62,14 +68,19 @@ export function SettingsView({
         columns={[
           { key: "name", header: "Nom" },
           { key: "type", header: "Type" },
-          { key: "actions", header: "", className: "w-12" },
+          { key: "actions", header: "", className: "w-px whitespace-nowrap" },
         ]}
         addLabel="Ajouter un compte"
-        onAdd={() => {
-          startTransition(() => {
-            void createAccount("Nouveau compte", "asset");
-          });
-        }}
+        addDisabled={accountDraft}
+        onAdd={() => setAccountDraft(true)}
+        leading={
+          accountDraft ? (
+            <AccountDraftRow
+              onConfirm={(name, type) => createAccount(name, type)}
+              onCancel={() => setAccountDraft(false)}
+            />
+          ) : null
+        }
       >
         {accounts.map((account) => (
           <TableRow key={account.id}>
@@ -113,17 +124,20 @@ export function SettingsView({
       <RecurringList
         title="Paies récurrentes"
         description="Répétition et prochaine paie : le mois se remplit tout seul (une ligne par date)."
-        addLabel="Ajouter un modèle"
+        addLabel="Ajouter une paie"
+        addDisabled={incomeDraft || !firstAccountId}
         emptyTitle="Aucune paie récurrente"
-        emptyDescription="Ajoute un modèle pour remplir les mois suivants automatiquement."
-        onAdd={
-          firstAccountId
-            ? () => {
-                startTransition(() => {
-                  void createIncomeTemplate(firstAccountId);
-                });
-              }
-            : undefined
+        emptyDescription="Ajoute une paie pour remplir les mois suivants automatiquement."
+        onAdd={firstAccountId ? () => setIncomeDraft(true) : undefined}
+        draft={
+          incomeDraft && firstAccountId ? (
+            <IncomeTemplateDraft
+              accounts={accounts}
+              defaultAccountId={firstAccountId}
+              onConfirm={(values) => createIncomeTemplate(values)}
+              onCancel={() => setIncomeDraft(false)}
+            />
+          ) : null
         }
       >
         {incomeTemplates.map((row) => (
@@ -135,16 +149,20 @@ export function SettingsView({
         title="Paiements récurrents"
         description="Loyer, électricité, abonnements. Déplie une ligne pour modifier. Les mensualités de dettes s’ajoutent toutes seules."
         addLabel="Ajouter une facture"
+        addDisabled={paymentDraft || !firstAccountId}
         emptyTitle="Aucune facture récurrente"
         emptyDescription="Ajoute un loyer, un abonnement ou une facture qui revient chaque mois."
-        onAdd={
-          firstAccountId
-            ? () => {
-                startTransition(() => {
-                  void createPaymentTemplate(firstAccountId);
-                });
-              }
-            : undefined
+        onAdd={firstAccountId ? () => setPaymentDraft(true) : undefined}
+        draft={
+          paymentDraft && firstAccountId ? (
+            <PaymentTemplateDraft
+              accounts={accounts}
+              debts={debts}
+              defaultAccountId={firstAccountId}
+              onConfirm={(values) => createPaymentTemplate(values)}
+              onCancel={() => setPaymentDraft(false)}
+            />
+          ) : null
         }
       >
         {paymentTemplates.map((row) => (

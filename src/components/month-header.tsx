@@ -12,6 +12,7 @@ import {
   canOpenMonth,
   currentYearMonth,
   formatMonthTitle,
+  isBeyondVisibleFuture,
   monthPath,
   type YearMonth,
 } from "@/lib/dates";
@@ -27,11 +28,12 @@ function MonthNavButton({
   month: number;
   knownMonths: YearMonth[];
 }) {
+  const now = currentYearMonth();
   const target = addMonths(year, month, direction);
   const label = direction < 0 ? "Mois précédent" : "Mois suivant";
   const Icon = direction < 0 ? ChevronLeftIcon : ChevronRightIcon;
 
-  if (canOpenMonth(target.year, target.month, knownMonths, currentYearMonth())) {
+  if (canOpenMonth(target.year, target.month, knownMonths, now)) {
     return (
       <Button
         nativeButton={false}
@@ -39,6 +41,19 @@ function MonthNavButton({
         variant="outline"
         size="icon"
         aria-label={label}
+      >
+        <Icon size={16} />
+      </Button>
+    );
+  }
+
+  if (isBeyondVisibleFuture(target, now)) {
+    return (
+      <Button
+        variant="outline"
+        size="icon"
+        aria-label="Le futur est limité au mois prochain"
+        disabled
       >
         <Icon size={16} />
       </Button>

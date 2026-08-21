@@ -119,7 +119,7 @@ export function OnboardingWizard() {
       "Tes revenus : répétition (semaine, 2 semaines ou mois) et date de la prochaine paie.",
       "Loyer, électricité, internet : factures du mois, compte débité et date. Les dettes viennent après.",
       "Prêts et cartes à solde. Tu peux lier une dette à un compte (ex. Mastercard) : les charges dessus l’augmentent, la mensualité depuis la banque la diminue.",
-      "On génère le mois courant à partir de tes modèles. Tu pourras relancer cet assistant dans les réglages.",
+      "On génère le mois courant à partir de tes paies et factures. Tu pourras relancer cet assistant dans les réglages.",
     ][step - 1];
   }, [step]);
 
@@ -677,7 +677,7 @@ export function OnboardingWizard() {
               <CardHeader>
                 <CardTitle>Prêt à générer</CardTitle>
                 <CardDescription>
-                  Ces modèles seront copiés dans le mois en cours.
+                  Tes paies et factures seront copiées dans le mois en cours.
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col gap-2">

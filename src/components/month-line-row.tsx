@@ -60,7 +60,7 @@ export function MonthLineRow({
 
   return (
     <>
-      <div className="group/line flex flex-col gap-3 py-3">
+      <div data-icon-hover="" className="group/line flex flex-col gap-3 py-3">
         <div className="flex items-center gap-3">
           <Checkbox
             checked={done}

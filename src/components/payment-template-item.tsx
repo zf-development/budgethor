@@ -3,18 +3,29 @@
 import { useTransition } from "react";
 
 import { deletePaymentTemplate, updatePaymentTemplate } from "@/actions/budget";
-import { AccountSelect, DebtSelect } from "@/components/account-select";
 import { DeleteRowButton } from "@/components/delete-row-button";
-import { MonthDayPicker } from "@/components/month-day-picker";
 import { MoneyText } from "@/components/money-text";
+import {
+  PaymentTemplateFields,
+  type PaymentTemplateValues,
+} from "@/components/payment-template-fields";
 import { RecurringBadge, RecurringRow } from "@/components/recurring-list";
-import { SpreadsheetInput } from "@/components/spreadsheet-input";
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { paymentFlowLabel } from "@/lib/accounts";
 import { formatMonthlyCadence } from "@/lib/dates";
 import { isDebtManagedPayment } from "@/lib/debts";
 import { parseMoneyToCents } from "@/lib/money";
 import type { Account, Debt, PaymentTemplate } from "@/db/schema";
+
+function templateValues(template: PaymentTemplate): PaymentTemplateValues {
+  return {
+    label: template.label,
+    accountId: template.accountId,
+    dayOfMonth: template.dayOfMonth,
+    amountInput: String(template.expectedAmountCents / 100),
+    notes: template.notes,
+    debtId: template.debtId,
+  };
+}
 
 export function PaymentTemplateItem({
   template,
@@ -33,6 +44,24 @@ export function PaymentTemplateItem({
     ? (accounts.find((row) => row.id === debt.accountId) ?? null)
     : null;
 
+  function commit(patch: Partial<PaymentTemplateValues>) {
+    const next: Parameters<typeof updatePaymentTemplate>[1] = {};
+    if (patch.label !== undefined) next.label = patch.label;
+    if (patch.accountId !== undefined) next.accountId = patch.accountId;
+    if (patch.dayOfMonth !== undefined) next.dayOfMonth = patch.dayOfMonth;
+    if (patch.notes !== undefined) next.notes = patch.notes;
+    if (patch.debtId !== undefined) next.debtId = patch.debtId;
+    if (patch.amountInput !== undefined) {
+      const cents = parseMoneyToCents(patch.amountInput);
+      if (cents === null) return;
+      next.expectedAmountCents = cents;
+    }
+    if (Object.keys(next).length === 0) return;
+    startTransition(() => {
+      void updatePaymentTemplate(template.id, next);
+    });
+  }
+
   return (
     <RecurringRow
       title={template.label}
@@ -45,118 +74,26 @@ export function PaymentTemplateItem({
         </>
       }
     >
-      <FieldGroup className="gap-3 sm:grid sm:grid-cols-2">
-        {locked ? null : (
-          <Field>
-            <FieldLabel htmlFor={`payment-label-${template.id}`}>Libellé</FieldLabel>
-            <SpreadsheetInput
-              appearance="field"
-              id={`payment-label-${template.id}`}
-              ariaLabel="Libellé"
-              value={template.label}
-              onCommit={(label) => {
-                startTransition(() => {
-                  void updatePaymentTemplate(template.id, { label });
-                });
-              }}
-            />
-          </Field>
-        )}
-        <Field>
-          <FieldLabel>Compte</FieldLabel>
-          <AccountSelect
-            appearance="field"
-            ariaLabel="Compte"
-            accounts={accounts}
-            className="max-w-none"
-            value={template.accountId}
-            onChange={(accountId) => {
-              startTransition(() => {
-                void updatePaymentTemplate(template.id, { accountId });
-              });
-            }}
-          />
-        </Field>
-        {locked ? null : (
-          <Field>
-            <FieldLabel>Jour du mois</FieldLabel>
-            <MonthDayPicker
-              appearance="field"
-              ariaLabel="Jour du mois"
-              dayOfMonth={template.dayOfMonth}
-              onChange={(dayOfMonth) => {
-                startTransition(() => {
-                  void updatePaymentTemplate(template.id, { dayOfMonth });
-                });
-              }}
-            />
-          </Field>
-        )}
-        {locked ? null : (
-          <Field>
-            <FieldLabel htmlFor={`payment-amount-${template.id}`}>Montant prévu</FieldLabel>
-            <SpreadsheetInput
-              appearance="field"
-              id={`payment-amount-${template.id}`}
-              ariaLabel="Montant prévu"
-              suffix="CAD"
-              inputMode="decimal"
-              value={String(template.expectedAmountCents / 100)}
-              onCommit={(next) => {
-                const cents = parseMoneyToCents(next);
-                if (cents === null) return;
-                startTransition(() => {
-                  void updatePaymentTemplate(template.id, { expectedAmountCents: cents });
-                });
-              }}
-            />
-          </Field>
-        )}
-        {locked ? null : (
-          <Field>
-            <FieldLabel>Dette liée</FieldLabel>
-            <DebtSelect
-              appearance="field"
-              ariaLabel="Dette liée (optionnel)"
-              className="max-w-none"
-              debts={debts}
-              value={template.debtId}
-              onChange={(debtId) => {
-                startTransition(() => {
-                  void updatePaymentTemplate(template.id, { debtId });
-                });
-              }}
-            />
-          </Field>
-        )}
-        <Field>
-          <FieldLabel htmlFor={`payment-notes-${template.id}`}>Notes</FieldLabel>
-          <SpreadsheetInput
-            appearance="field"
-            id={`payment-notes-${template.id}`}
-            ariaLabel="Notes"
-            value={template.notes}
-            onCommit={(notes) => {
-              startTransition(() => {
-                void updatePaymentTemplate(template.id, { notes });
-              });
-            }}
-          />
-        </Field>
-        {locked ? null : (
-          <Field className="sm:col-span-2 sm:items-end">
-            <DeleteRowButton
-              title={`Supprimer « ${template.label} » ?`}
-              description="Ce modèle ne remplira plus les mois suivants. Les lignes déjà créées restent."
-              onClick={() => {
-                startTransition(() => {
-                  void deletePaymentTemplate(template.id);
-                });
-              }}
-            />
-          </Field>
-        )}
-      </FieldGroup>
+      <PaymentTemplateFields
+        idPrefix={`payment-${template.id}`}
+        accounts={accounts}
+        debts={debts}
+        values={templateValues(template)}
+        locked={locked}
+        onChange={commit}
+      />
+      {locked ? null : (
+        <DeleteRowButton
+          appearance="label"
+          title={`Supprimer « ${template.label} » ?`}
+          description="Cette facture ne remplira plus les mois suivants. Les lignes déjà créées restent."
+          onClick={() => {
+            startTransition(() => {
+              void deletePaymentTemplate(template.id);
+            });
+          }}
+        />
+      )}
     </RecurringRow>
   );
 }

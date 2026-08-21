@@ -130,8 +130,9 @@ export function AccountMonthCards({
                 </p>
               ) : (
                 <p className="text-muted-foreground">
-                  Estimation = solde au 1er + paies − paiements (prévu si pas encore payé).
-                  Ce n’est pas un solde bancaire en temps réel.
+                  Le solde au 1er reprend ce qui devrait rester du mois précédent. Tu peux le
+                  corriger. L’estimation = solde au 1er + paies − paiements (prévu si pas encore
+                  payé). Ce n’est pas un solde bancaire en temps réel.
                 </p>
               )}
             </CardContent>

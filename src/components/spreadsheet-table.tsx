@@ -32,16 +32,20 @@ export function SpreadsheetTable({
   columns,
   children,
   footer,
+  leading,
   onAdd,
   addLabel,
+  addDisabled,
 }: {
   title: React.ReactNode;
   description?: React.ReactNode;
   columns: SpreadsheetColumn[];
   children: React.ReactNode;
   footer?: React.ReactNode;
+  leading?: React.ReactNode;
   onAdd?: () => void;
   addLabel?: string;
+  addDisabled?: boolean;
 }) {
   return (
     <Card className="gap-0 py-0">
@@ -50,7 +54,7 @@ export function SpreadsheetTable({
         {description ? <CardDescription>{description}</CardDescription> : null}
         {onAdd ? (
           <CardAction>
-            <Button variant="outline" size="sm" onClick={onAdd}>
+            <Button variant="outline" size="sm" disabled={addDisabled} onClick={onAdd}>
               <PlusIcon size={16} data-icon="inline-start" />
               {addLabel ?? "Ajouter une ligne"}
             </Button>
@@ -70,7 +74,10 @@ export function SpreadsheetTable({
             ))}
           </TableRow>
         </TableHeader>
-        <TableBody>{children}</TableBody>
+        <TableBody>
+          {leading}
+          {children}
+        </TableBody>
         {footer}
       </Table>
     </Card>
