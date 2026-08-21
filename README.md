@@ -2,6 +2,10 @@
   <img src="public/budgethor-logo.jpg" width="96" alt="Budgethor" />
 </p>
 
+<p align="center">
+  <em>Logo et icône générés avec ChatGPT.</em>
+</p>
+
 <h1 align="center">Budgethor</h1>
 
 <p align="center">
@@ -75,3 +79,7 @@ Aucune donnée budgétaire n’est envoyée à un serveur. Usage personnel, pas 
 [Zachary Gagné](https://github.com/zf-development) — développeur indépendant à Montréal.
 
 [GitHub](https://github.com/zf-development) · [LinkedIn](https://www.linkedin.com/in/zgagne)
+
+## Crédits
+
+Le logo et l’icône de l’application ont été générés avec ChatGPT.
