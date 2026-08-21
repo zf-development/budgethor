@@ -12,3 +12,18 @@ export function fieldAppearanceClassName(
     className,
   );
 }
+
+/** Same box for hover (button) and edit (input) so the dashed frame does not jump. */
+export function fieldControlClassName(
+  appearance: FieldAppearance,
+  className?: string,
+) {
+  return fieldAppearanceClassName(
+    appearance,
+    cn(
+      "box-border h-8 w-full min-w-0 max-w-none rounded-3xl px-3 py-0 text-sm font-normal",
+      appearance === "field" && "bg-input/50",
+      className,
+    ),
+  );
+}

@@ -3,7 +3,6 @@ import { HandCoinsIcon, WalletIcon } from "@/components/icons";
 
 import { DebtProgressRow } from "@/components/debt-progress";
 import { MoneyText } from "@/components/money-text";
-import { PaymentStatusBadge } from "@/components/payment-status-badge";
 import { StatCard } from "@/components/stat-card";
 import { MoneyFlowRow, SummaryRow } from "@/components/summary-row";
 import { Badge } from "@/components/ui/badge";
@@ -49,7 +48,12 @@ export function DashboardKpis({
         badge={leftoverBadge}
         dominant
         value={<MoneyText cents={stats.plannedEndCents} />}
-        hint="C’est l’argent restant une fois les paies encore à recevoir et les paiements encore dus pris en compte. Les cartes de crédit sont dans tes comptes, plus bas."
+        footer={
+          <p className="text-muted-foreground">
+            C’est l’argent restant une fois les paies encore à recevoir et les paiements encore
+            dus pris en compte. Les cartes de crédit sont dans tes comptes, plus bas.
+          </p>
+        }
       >
         <div className="flex flex-col gap-2">
           <MoneyFlowRow label="Disponible maintenant" cents={stats.availableNowCents} />
@@ -74,26 +78,18 @@ export function DashboardKpis({
             }
           />
         </div>
-        {stats.unpaidCount > 0 || stats.nextPayment ? (
+        {stats.unpaidCount > 0 || stats.overduePaymentCount > 0 ? (
           <>
             <Separator />
             <div className="flex flex-col gap-2">
               {stats.unpaidCount > 0 ? (
-                <SummaryRow label="À payer">
+                <SummaryRow label="À payer ce mois-ci">
                   <MoneyText cents={stats.unpaidExpected} />
-                  {" · "}
-                  {paymentCountLabel(stats.unpaidCount)}
                 </SummaryRow>
               ) : null}
-              {stats.nextPayment ? (
-                <SummaryRow label="Prochaine échéance">
-                  <span className="inline-flex max-w-full flex-wrap items-center justify-end gap-2">
-                    <PaymentStatusBadge tone={stats.nextPayment.tone} />
-                    <span>
-                      {formatLineDate(year, month, stats.nextPayment.dayOfMonth)} ·{" "}
-                      {stats.nextPayment.label} — <MoneyText cents={stats.nextPayment.amountCents} />
-                    </span>
-                  </span>
+              {stats.overduePaymentCount > 0 ? (
+                <SummaryRow label="En retard">
+                  {paymentCountLabel(stats.overduePaymentCount)}
                 </SummaryRow>
               ) : null}
             </div>

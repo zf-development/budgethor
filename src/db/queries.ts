@@ -22,6 +22,7 @@ import {
   currentYearMonth,
   isBeyondVisibleFuture,
   isPastYearMonth,
+  lineDateHasArrived,
 } from "@/lib/dates";
 import { debtPaymentLabel, paymentDebtEffect } from "@/lib/debts";
 import { incomeDaysInMonth, isIncomeCadence } from "@/lib/income";
@@ -185,6 +186,23 @@ function applyOpeningBalances(monthId: string, openings: Map<string, number>) {
   }
 }
 
+function acceptDueIncomes(monthId: string, year: number, month: number) {
+  const db = getDb();
+  const incomes = db
+    .select()
+    .from(incomeEntries)
+    .where(eq(incomeEntries.monthId, monthId))
+    .all();
+  for (const entry of incomes) {
+    if (entry.received) continue;
+    if (!lineDateHasArrived(year, month, entry.dayOfMonth)) continue;
+    db.update(incomeEntries)
+      .set({ received: true })
+      .where(eq(incomeEntries.id, entry.id))
+      .run();
+  }
+}
+
 export function generateMonthFromTemplates(year: number, month: number) {
   const db = getDb();
   syncDebtPaymentTemplates();
@@ -252,6 +270,8 @@ export function generateMonthFromTemplates(year: number, month: number) {
         .run();
     }
   }
+
+  acceptDueIncomes(monthRow.id, year, month);
 
   const paymentTpls = listPaymentTemplates();
   const existingPayments = db

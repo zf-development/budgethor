@@ -1,4 +1,10 @@
-import { paymentTone, type LineTone } from "@/lib/dates";
+import {
+  compareInboxUrgency,
+  lineUrgency,
+  paymentTone,
+  type InboxUrgency,
+  type LineTone,
+} from "@/lib/dates";
 import type { Account, AccountSnapshot, Debt, IncomeEntry, PaymentEntry } from "@/db/schema";
 
 export function totalsFor(incomes: IncomeEntry[], payments: PaymentEntry[]) {
@@ -51,6 +57,7 @@ export type MonthLineItem = {
 
 export type MonthInboxItem = MonthLineItem & {
   tone: Extract<LineTone, "overdue" | "upcoming">;
+  urgency: InboxUrgency;
 };
 
 function progressPercent(done: number, total: number) {
@@ -159,13 +166,28 @@ export function monthDashboard({
   const currentDay = today.getDate();
   const isCurrentMonth = today.getFullYear() === year && today.getMonth() + 1 === month;
 
-  const inbox = schedule.filter((item): item is MonthInboxItem => {
-    if (item.tone === "overdue") return true;
-    return isCurrentMonth && item.tone === "upcoming" && item.dayOfMonth <= currentDay + 7;
-  }).sort((a, b) => {
-    if (a.tone !== b.tone) return a.tone === "overdue" ? -1 : 1;
-    return a.dayOfMonth - b.dayOfMonth;
-  });
+  const inbox = schedule
+    .flatMap((item): MonthInboxItem[] => {
+      if (item.kind === "income") return [];
+      if (item.tone !== "overdue" && item.tone !== "upcoming") return [];
+      const urgency = lineUrgency({
+        done: false,
+        dayOfMonth: item.dayOfMonth,
+        year,
+        month,
+        today,
+      });
+      if (!urgency) return [];
+      if (urgency === "upcoming" && (!isCurrentMonth || item.dayOfMonth > currentDay + 7)) {
+        return [];
+      }
+      return [{ ...item, urgency }];
+    })
+    .sort((a, b) => {
+      const byUrgency = compareInboxUrgency(a.urgency, b.urgency);
+      if (byUrgency !== 0) return byUrgency;
+      return a.dayOfMonth - b.dayOfMonth || a.label.localeCompare(b.label, "fr");
+    });
 
   const nextPayment =
     schedule.find((item) => item.kind === "payment" && item.tone !== "paid") ?? null;

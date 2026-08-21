@@ -61,7 +61,7 @@ export function SpreadsheetTable({
           </CardAction>
         ) : null}
       </CardHeader>
-      <Table>
+      <Table className="table-fixed">
         <TableHeader>
           <TableRow className="hover:bg-transparent">
             {columns.map((column) => (

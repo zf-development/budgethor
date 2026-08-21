@@ -76,8 +76,8 @@ export function MonthView({
             {historyMode ? "Mois d’historique généré" : "Mois d’historique"}
           </AlertTitle>
           <AlertDescription>
-            Vérifie les soldes au 1er, puis coche les paies reçues et les paiements vraiment faits
-            ce mois-là.
+            Vérifie les soldes au 1er et les paiements vraiment faits ce mois-là. Les paies sont
+            marquées reçues automatiquement.
           </AlertDescription>
         </Alert>
       ) : null}

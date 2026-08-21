@@ -67,8 +67,8 @@ export function SettingsView({
         description="Argent (banque, PayPal) ou crédit (carte). Une paie ou un paiement est toujours rattaché à un compte."
         columns={[
           { key: "name", header: "Nom" },
-          { key: "type", header: "Type" },
-          { key: "actions", header: "", className: "w-px whitespace-nowrap" },
+          { key: "type", header: "Type", className: "w-40" },
+          { key: "actions", header: "", className: "w-28 whitespace-nowrap" },
         ]}
         addLabel="Ajouter un compte"
         addDisabled={accountDraft}

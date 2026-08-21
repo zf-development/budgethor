@@ -8,7 +8,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { fieldAppearanceClassName, type FieldAppearance } from "@/components/field-appearance";
+import {
+  fieldAppearanceClassName,
+  fieldControlClassName,
+  type FieldAppearance,
+} from "@/components/field-appearance";
 import { ACCOUNT_TYPE_LABELS, accountOptionLabel } from "@/lib/accounts";
 import type { Account, Debt } from "@/db/schema";
 import { cn } from "@/lib/utils";
@@ -42,9 +46,9 @@ export function AccountTypeSelect({
       >
         <SelectTrigger
           size={size}
-          className={fieldAppearanceClassName(
+          className={fieldControlClassName(
             appearance,
-            cn("flex w-full min-w-0 max-w-none", className),
+            cn("justify-between", className),
           )}
           aria-label={ariaLabel}
         >

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
-import { fieldAppearanceClassName, type FieldAppearance } from "@/components/field-appearance";
+import { fieldControlClassName, type FieldAppearance } from "@/components/field-appearance";
 import { MoneyText } from "@/components/money-text";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -66,9 +66,9 @@ export function SpreadsheetInput({
     if (appearance === "plain") setEditing(false);
   }
 
-  const controlClassName = cn(
-    "h-8 w-full min-w-0 rounded-3xl px-3 text-sm font-normal",
-    className,
+  const controlClassName = fieldControlClassName(
+    appearance,
+    cn(appearance === "plain" && editing && "border-border bg-input/50", className),
   );
 
   const shared = {
@@ -100,19 +100,16 @@ export function SpreadsheetInput({
     const money = inputMode === "decimal" ? parseMoneyToCents(value) : null;
     const empty = value.trim() === "";
     return (
-      <div className="block w-full min-w-0">
+      <div className="w-full min-w-0">
         <Button
           type="button"
           variant="ghost"
           size="sm"
           aria-label={ariaLabel}
-          className={fieldAppearanceClassName(
-            "plain",
-            cn(
-              "flex max-w-full shrink justify-start",
-              controlClassName,
-              empty && "text-muted-foreground",
-            ),
+          className={cn(
+            "justify-start",
+            controlClassName,
+            empty && "text-muted-foreground",
           )}
           onClick={() => setEditing(true)}
         >
@@ -140,7 +137,7 @@ export function SpreadsheetInput({
   }
 
   return (
-    <div className="block w-full min-w-0">
+    <div className="w-full min-w-0">
       <Input className={controlClassName} {...shared} />
     </div>
   );

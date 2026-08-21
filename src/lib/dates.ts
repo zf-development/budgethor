@@ -82,6 +82,19 @@ export function lineDate(year: number, month: number, dayOfMonth: number) {
   return new Date(year, month - 1, clampDayForMonth(dayOfMonth, year, month));
 }
 
+export function startOfToday(today = new Date()) {
+  return new Date(today.getFullYear(), today.getMonth(), today.getDate());
+}
+
+export function lineDateHasArrived(
+  year: number,
+  month: number,
+  dayOfMonth: number,
+  today = new Date(),
+) {
+  return lineDate(year, month, dayOfMonth) <= startOfToday(today);
+}
+
 export function formatMonthTitle(year: number, month: number) {
   const label = new Intl.DateTimeFormat(DATE_LOCALE, {
     month: "long",
@@ -197,6 +210,41 @@ export function paymentTone(args: {
   if (isCurrentMonth && dueDay <= currentDay) return "overdue";
   if (isCurrentMonth) return "upcoming";
   return "unpaid";
+}
+
+export type InboxUrgency = "overdue" | "today" | "upcoming";
+
+const INBOX_URGENCY_RANK: Record<InboxUrgency, number> = {
+  overdue: 0,
+  today: 1,
+  upcoming: 2,
+};
+
+export function compareInboxUrgency(a: InboxUrgency, b: InboxUrgency) {
+  return INBOX_URGENCY_RANK[a] - INBOX_URGENCY_RANK[b];
+}
+
+/** Same due date as `paymentTone`, but splits “due today” from past-due. */
+export function lineUrgency(args: {
+  done: boolean;
+  dayOfMonth: number;
+  year: number;
+  month: number;
+  today?: Date;
+}): InboxUrgency | null {
+  if (args.done) return null;
+  const today = args.today ?? new Date();
+  const currentYear = today.getFullYear();
+  const currentMonth = today.getMonth() + 1;
+  const currentDay = today.getDate();
+  const dueDay = clampDayForMonth(args.dayOfMonth, args.year, args.month);
+  const isPastMonth =
+    args.year < currentYear || (args.year === currentYear && args.month < currentMonth);
+  const isCurrentMonth = args.year === currentYear && args.month === currentMonth;
+  if (isPastMonth || (isCurrentMonth && dueDay < currentDay)) return "overdue";
+  if (isCurrentMonth && dueDay === currentDay) return "today";
+  if (isCurrentMonth && dueDay > currentDay) return "upcoming";
+  return null;
 }
 
 export function rowToneClass(tone: LineTone) {
